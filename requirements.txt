@@ -1,5 +1,8 @@
-keboola.component
+keboola.component==1.4.4
 keboola.utils
 keboola.http-client
 mock
 freezegun
+xero-python==1.26.0
+dateparser
+regex==2022.03.02
