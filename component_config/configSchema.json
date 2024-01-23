@@ -1,19 +1,112 @@
 {
   "type": "object",
-  "title": "extractor configuration",
+  "title": "Xero Accounting configuration",
   "required": [
-    "print_hello"
   ],
   "properties": {
-    "print_hello": {
-      "type": "boolean",
-      "title": "Print Hello",
-      "propertyOrder": 1
+    "tenant_ids": {
+      "title": "Tenant IDs",
+      "description": "Comma separated list of Tenant IDs of tenants to download the data from. Leave empty to download all available. Data will be merged from all provided tenants.",
+      "type": "string",
+      "propertyOrder": 10
     },
-    "debug": {
-      "type": "boolean",
-      "title": "Debug",
-      "propertyOrder": 2
+    "sync_options": {
+      "type": "object",
+      "title": "Sync Options",
+      "propertyOrder": 20,
+      "properties": {
+        "date": {
+          "type": "string",
+          "required": true,
+          "title": "Date",
+          "description": "Date must be set in YYYY-MM-DD format.",
+          "propertyOrder": 1
+        },
+        "periods": {
+          "type": "integer",
+          "required": true,
+          "title": "Periods",
+          "description": "The number of periods to compare",
+          "enum": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "propertyOrder": 2
+        },
+        "timeframe": {
+          "type": "string",
+          "required": true,
+          "title": "Timeframe",
+          "enum": [
+            "MONTH",
+            "QUARTER",
+            "YEAR"
+          ],
+          "default": "MONTH",
+          "description": "The period size to compare to (MONTH, QUARTER, YEAR)",
+          "propertyOrder": 3
+        },
+        "tracking_option_id_1": {
+          "type": "string",
+          "title": "Tracking Option ID1 (Optional)",
+          "description": "The balance sheet will be filtered by this option if supplied. Note you cannot filter just by the TrackingCategory.",
+          "propertyOrder": 4
+        },
+        "tracking_option_id_2": {
+          "type": "string",
+          "title": "Tracking Option ID2 (Optional)",
+          "description": "If you want to filter by more than one tracking category option then you can specify a second option too. See the Balance Sheet report in Xero learn more about this behavior when filtering by tracking category options.",
+          "propertyOrder": 5
+        },
+        "standard_layout": {
+          "type": "boolean",
+          "title": "Standard Layout",
+          "description": "If you set this parameter to \"true\" then no custom report layouts will be applied to response.",
+          "default": true,
+          "propertyOrder": 6
+        },
+        "payments_only": {
+          "type": "boolean",
+          "title": "Payments Only",
+          "description": "\tSet this to true to get cash transactions only.",
+          "default": false,
+          "propertyOrder": 7
+        }
+      }
+    },
+    "destination": {
+      "title": "Destination",
+      "type": "object",
+      "properties": {
+        "load_type": {
+          "type": "string",
+          "required": true,
+          "enum": [
+            "full_load",
+            "incremental_load"
+          ],
+          "options": {
+            "enum_titles": [
+              "Full Load",
+              "Incremental Load"
+            ]
+          },
+          "default": "full_load",
+          "title": "Load Type",
+          "description": "If Full load is used, the destination table will be overwritten every run. If incremental load is used, data will be upserted into the destination table. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.",
+          "propertyOrder": 20
+        }
+      },
+      "propertyOrder": 30
     }
   }
 }
