@@ -128,6 +128,7 @@ class Component(ComponentBase):
 
     def _init_client_from_state(self, state_authorization_params: Union[str, Dict]) -> None:
         oauth_credentials = self.configuration.oauth_credentials
+        logging.info(oauth_credentials)
         oauth_credentials.data = self._load_state_oauth(state_authorization_params)
         self.client = XeroClient(oauth_credentials)
         try:
