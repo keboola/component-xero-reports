@@ -1,7 +1,3 @@
-"""
-Template Component main class.
-
-"""
 import csv
 import logging
 from datetime import datetime
@@ -20,15 +16,6 @@ REQUIRED_IMAGE_PARS = []
 
 
 class Component(ComponentBase):
-    """
-        Extends base class for general Python components. Initializes the CommonInterface
-        and performs configuration validation.
-
-        For easier debugging the data folder is picked up by default from `../data` path,
-        relative to working directory.
-
-        If `debug` parameter is present in the `config.json`, the default logger is set to verbose DEBUG mode.
-    """
 
     def __init__(self):
         super().__init__()
