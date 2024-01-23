@@ -29,7 +29,6 @@ KEY_STATE_ENDPOINT_COLUMNS = "endpoint_columns"
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
 REQUIRED_PARAMETERS = [KEY_ENDPOINTS]
-REQUIRED_IMAGE_PARS = []
 
 
 class Component(ComponentBase):
@@ -39,8 +38,7 @@ class Component(ComponentBase):
         self.tables = {}
         self._writer_cache = {}
         self.new_state = {}
-        super().__init__(data_path_override=data_path_override, required_parameters=REQUIRED_PARAMETERS,
-                         required_image_parameters=REQUIRED_IMAGE_PARS)
+        super().__init__(data_path_override=data_path_override, required_parameters=REQUIRED_PARAMETERS)
 
         register_csv_dialect()
 
