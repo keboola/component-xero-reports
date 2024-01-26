@@ -88,6 +88,7 @@ class Component(ComponentBase):
         logging.info("Fetching report data")
         saved_tables = []
         for tenant_id in tenant_ids:
+            print(f"Processing tenant_id: {tenant_id}")
             report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **kwargs)
             print(report)
             saved_tables.append(f"balance_sheet_{tenant_id}")
