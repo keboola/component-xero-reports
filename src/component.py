@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Set, Union
+from typing import Dict, List, Union
 
 
 from keboola.component.base import ComponentBase
