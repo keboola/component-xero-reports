@@ -25,7 +25,6 @@ class Table:
 class XeroClient:
     def __init__(self, oauth_credentials: OauthCredentials) -> None:
         self._oauth_token_dict = oauth_credentials.data
-
         oauth2_token_obj = OAuth2Token(client_id=oauth_credentials.appKey,
                                        client_secret=oauth_credentials.appSecret)
         oauth2_token_obj.update_token(**self._oauth_token_dict)
