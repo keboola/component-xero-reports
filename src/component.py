@@ -5,7 +5,6 @@ from typing import Dict, List, Union
 
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
-from keboola.component.dao import TableDefinition
 from keboola.component.interface import register_csv_dialect
 from keboola.utils.helpers import comma_separated_values_to_list
 
