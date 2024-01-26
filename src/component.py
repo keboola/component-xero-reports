@@ -50,6 +50,7 @@ class Component(ComponentBase):
         sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
         destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
 
+        """
         date = sync_options.get(KEY_DATE)
         periods = sync_options.get(KEY_PERIODS)
         timeframe = sync_options.get(KEY_TIMEFRAME)
@@ -57,6 +58,7 @@ class Component(ComponentBase):
         tracking_option_id2 = sync_options.get(KEY_TRACKING_OPTION_ID2)
         standard_layout = sync_options.get(KEY_STANDARD_LAYOUT)
         payments_only = sync_options.get(KEY_PAYMENTS_ONLY)
+        """
 
         load_type = destination.get(KEY_LOAD_TYPE, "full_load")
         self.incremental_load = load_type == "incremental_load"
