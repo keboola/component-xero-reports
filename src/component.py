@@ -85,7 +85,7 @@ class Component(ComponentBase):
                                 " the component must be reauthorized.") from xero_exc
 
     def download_report(self, tenant_ids: List[str], **kwargs) -> None:
-        logging.info("Fetching report data")
+        logging.info(f"Fetching report data for tenant_ids: {tenant_ids}")
         saved_tables = []
         for tenant_id in tenant_ids:
             print(f"Processing tenant_id: {tenant_id}")
