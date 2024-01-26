@@ -94,8 +94,7 @@ class Component(ComponentBase):
             saved_tables.append(f"balance_sheet_{tenant_id}")
 
         for table_name in saved_tables:
-            table_def = TableDefinition(table_name)
-            table_def.incremental = self.incremental_load
+            table_def = self.create_out_table_definition(table_name, incremental=self.incremental_load)
             self.write_manifest(table_def)
 
     def _init_client(self) -> None:
