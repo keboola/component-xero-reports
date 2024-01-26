@@ -37,7 +37,7 @@ REQUIRED_PARAMETERS = [KEY_GROUP_SYNC_OPTIONS, KEY_GROUP_DESTINATION_OPTIONS]
 class Component(ComponentBase):
     def __init__(self, data_path_override: str = None):
         self.incremental_load = None
-        self.client= None
+        self.client = None
         self.tables = {}
         self._writer_cache = {}
         self.new_state = {}
