@@ -86,11 +86,11 @@ class Component(ComponentBase):
 
     def download_report(self, tenant_ids: List[str], **kwargs) -> None:
         logging.info("Fetching report data")
-        saved_tables: Set[str] = set()
+        saved_tables = []
         for tenant_id in tenant_ids:
             report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **kwargs)
             print(report)
-            saved_tables.update(f"balance_sheet_{tenant_id}")
+            saved_tables.append(f"balance_sheet_{tenant_id}")
 
         for table_name in saved_tables:
             table_def = TableDefinition(table_name)
