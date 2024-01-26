@@ -1,9 +1,7 @@
 import json
 import logging
 from typing import Dict, List, Set, Union
-import dateparser
-import os
-import csv
+
 
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
@@ -13,14 +11,19 @@ from keboola.utils.helpers import comma_separated_values_to_list
 
 from xero.client import XeroClient
 from xero.utility import XeroException
-from xero.xero_parser import XeroParser
-from xero.table_definition_factory import TableDefinitionFactory
+
 
 # configuration variables
-KEY_MODIFIED_SINCE = 'modified_since'
-KEY_ENDPOINTS = 'endpoints'
 KEY_TENANT_IDS = 'tenant_ids'
-KEY_DESTINATION_OPTIONS = 'destination'
+KEY_GROUP_SYNC_OPTIONS = 'sync_options'
+KEY_DATE = 'date'
+KEY_PERIODS = 'periods'
+KEY_TIMEFRAME = 'timeframe'
+KEY_TRACKING_OPTION_ID1 = 'tracking_option_id1'
+KEY_TRACKING_OPTION_ID2 = 'tracking_option_id2'
+KEY_STANDARD_LAYOUT = 'standard_layout'
+KEY_PAYMENTS_ONLY = 'payments_only'
+KEY_GROUP_DESTINATION_OPTIONS = 'destination'
 KEY_LOAD_TYPE = 'load_type'
 
 KEY_STATE_OAUTH_TOKEN_DICT = "#oauth_token_dict"
@@ -28,13 +31,13 @@ KEY_STATE_ENDPOINT_COLUMNS = "endpoint_columns"
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_ENDPOINTS]
+REQUIRED_PARAMETERS = [KEY_GROUP_SYNC_OPTIONS, KEY_GROUP_DESTINATION_OPTIONS]
 
 
 class Component(ComponentBase):
     def __init__(self, data_path_override: str = None):
         self.incremental_load = None
-        self.client = None
+        self.client= None
         self.tables = {}
         self._writer_cache = {}
         self.new_state = {}
@@ -44,21 +47,26 @@ class Component(ComponentBase):
 
     def run(self):
         params: Dict = self.configuration.parameters
-        endpoints: List[str] = params[KEY_ENDPOINTS]
+        sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
+        destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
 
-        destination = params.get(KEY_DESTINATION_OPTIONS, {})
+        date = sync_options.get(KEY_DATE)
+        periods = sync_options.get(KEY_PERIODS)
+        timeframe = sync_options.get(KEY_TIMEFRAME)
+        tracking_option_id1 = sync_options.get(KEY_TRACKING_OPTION_ID1)
+        tracking_option_id2 = sync_options.get(KEY_TRACKING_OPTION_ID2)
+        standard_layout = sync_options.get(KEY_STANDARD_LAYOUT)
+        payments_only = sync_options.get(KEY_PAYMENTS_ONLY)
+
         load_type = destination.get(KEY_LOAD_TYPE, "full_load")
         self.incremental_load = load_type == "incremental_load"
-        modified_since = self._get_modified_since()
 
         self._init_client()
 
         available_tenant_ids = self._get_available_tenant_ids()
         tenant_ids_to_download = self._get_tenants_to_download(available_tenant_ids)
 
-        for endpoint in endpoints:
-            self.download_endpoint(endpoint_name=endpoint, tenant_ids=tenant_ids_to_download,
-                                   if_modified_since=modified_since)
+        self.download_report(tenant_ids=tenant_ids_to_download)
         self.refresh_token_and_save_state()
 
     def refresh_token_and_save_state(self) -> None:
@@ -74,41 +82,18 @@ class Component(ComponentBase):
                                 "\n Due to the functioning of the XERO authorization, if a component fails,"
                                 " the component must be reauthorized.") from xero_exc
 
-    def download_endpoint(self, endpoint_name: str, tenant_ids: List[str], **kwargs) -> None:
-        logging.info(f"Fetching data for endpoint : {endpoint_name}")
+    def download_report(self, tenant_ids: List[str], **kwargs) -> None:
+        logging.info("Fetching report data")
         saved_tables: Set[str] = set()
         for tenant_id in tenant_ids:
-            for pagen_num, page in enumerate(self.client.get_accounting_object(tenant_id=tenant_id,
-                                                                               model_name=endpoint_name,
-                                                                               **kwargs)):
-                parsed_data = XeroParser().parse_data(page)
-                self.save_parsed_data(parsed_data, pagen_num, tenant_id, endpoint_name)
-                saved_tables.update(list(parsed_data.keys()))
+            report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **kwargs)
+            print(report)
+            saved_tables.update(f"balance_sheet_{tenant_id}")
 
         for table_name in saved_tables:
-            table_def = self._get_table_definition_of_endpoint_data_by_name(endpoint_name, table_name)
+            table_def = TableDefinition(table_name)
             table_def.incremental = self.incremental_load
             self.write_manifest(table_def)
-
-    def save_parsed_data(self, parsed_data: Dict[str, List[Dict]], pagen_num: int, tenant_id: str,
-                         endpoint_name: str) -> None:
-        for table_name, table_data in parsed_data.items():
-            table_def = self._get_table_definition_of_endpoint_data_by_name(endpoint_name, table_name)
-            base_path = os.path.join(self.tables_out_path, table_def.name)
-            os.makedirs(base_path, exist_ok=True)
-            with open(os.path.join(base_path, f'{tenant_id}_{endpoint_name}_{pagen_num}.csv'), 'w') as f:
-                csv_writer = csv.DictWriter(f, dialect='kbc', fieldnames=table_def.columns)
-                csv_writer.writerows(table_data)
-
-    def _get_table_definition_of_endpoint_data_by_name(self, endpoint_name: str, table_name: str) -> TableDefinition:
-        all_table_definitions = self._get_all_table_definitions_of_endpoint_data(endpoint_name)
-        table_definition = all_table_definitions.get(table_name)
-        if not table_definition:
-            raise KeyError(f"Failed to get Table Definition of table {table_name}. Please contact support")
-        return table_definition
-
-    def _get_all_table_definitions_of_endpoint_data(self, endpoint_name: str) -> Dict[str, TableDefinition]:
-        return TableDefinitionFactory(endpoint_name, self).get_table_definitions()
 
     def _init_client(self) -> None:
         logging.info("Authorizing Client")
@@ -163,12 +148,6 @@ class Component(ComponentBase):
                     and "expires_in" in state_authorization_params and "token_type" in state_authorization_params:
                 return True
         return False
-
-    def _get_modified_since(self) -> str:
-        modified_since = self.configuration.parameters.get(KEY_MODIFIED_SINCE)
-        if modified_since:
-            modified_since = dateparser.parse(modified_since).isoformat()
-        return modified_since
 
     def _get_available_tenant_ids(self) -> List[str]:
         try:

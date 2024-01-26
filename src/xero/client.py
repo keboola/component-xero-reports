@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import inspect
 from typing import Dict, Iterable, List
 
 from keboola.component.dao import OauthCredentials, TableDefinition
@@ -14,7 +13,7 @@ from xero_python.api_client.serializer import serialize
 from xero_python.exceptions.http_status_exceptions import OAuth2InvalidGrantError, HTTPStatusException
 
 # Always import utility to monkey patch BaseModel
-from .utility import XeroException, get_accounting_model, EnhancedBaseModel
+from .utility import XeroException, EnhancedBaseModel
 
 
 @dataclass
@@ -65,28 +64,6 @@ class XeroClient:
             self.refresh_available_tenant_ids()
         return self._available_tenant_ids
 
-    def get_accounting_object(self, tenant_id: str, model_name: str, **kwargs) -> Iterable[List[EnhancedBaseModel]]:
+    def get_balance_sheet_report(self, tenant_id: str, **kwargs) -> Iterable[List[EnhancedBaseModel]]:
         accounting_api = AccountingApi(self._api_client)
-        model: EnhancedBaseModel = get_accounting_model(model_name)
-        getter_name = model.get_download_method_name()
-        if getter_name:
-            getter = getattr(accounting_api, getter_name)
-            getter_signature = inspect.signature(getter)
-            used_kwargs = {k: v for k, v in kwargs.items()
-                           if k in getter_signature.parameters and v is not None}
-            if 'page' in getter_signature.parameters:
-                used_kwargs['page'] = 1
-                while True:
-                    accounting_object = getter(tenant_id, **used_kwargs)
-                    if accounting_object.is_empty_list():
-                        break
-                    yield accounting_object.to_list()
-                    used_kwargs['page'] = used_kwargs['page'] + 1
-            else:
-                yield getter(tenant_id, **used_kwargs).to_list()
-        else:
-            raise XeroException(
-                f"Requested model ({model_name}) getter function not found.")
-
-    def get_serialized_accounting_object(self, model_name: str, **kwargs) -> Dict:
-        return serialize(self.get_accounting_object(model_name, **kwargs))
+        return accounting_api.get_report_balance_sheet(tenant_id, **kwargs).to_list()
