@@ -1,15 +1,20 @@
+import csv
 import json
 import logging
 from typing import Dict, List, Union
-
+from datetime import datetime
+from dateutil import parser
 
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 from keboola.component.interface import register_csv_dialect
 from keboola.utils.helpers import comma_separated_values_to_list
+from xero_python.accounting import RowType
+from xero_python.models import serialize_to_dict
 
 from xero.client import XeroClient
 from xero.utility import XeroException
+from xero_python.accounting.models import report as XeroReport
 
 
 # configuration variables
@@ -85,15 +90,21 @@ class Component(ComponentBase):
 
     def download_report(self, tenant_ids: List[str], **kwargs) -> None:
         logging.info(f"Fetching report data for tenant_ids: {tenant_ids}")
-        saved_tables = []
         for tenant_id in tenant_ids:
-            print(f"Processing tenant_id: {tenant_id}")
             report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **kwargs)
-            print(report)
-            saved_tables.append(f"balance_sheet_{tenant_id}")
+            parsed = self.parse_balance_sheet(report)
+            table_name = f"balance_sheet_{tenant_id}"
 
-        for table_name in saved_tables:
-            table_def = self.create_out_table_definition(table_name, incremental=self.incremental_load)
+            header = ['report_id', 'updated_date_utc', 'section_title', 'cell_1', 'cell_2', 'cell_3']
+            table_def = self.create_out_table_definition(table_name,
+                                                         columns=header,
+                                                         primary_key=['updated_date_utc', 'cell_2'],
+                                                         incremental=self.incremental_load)
+
+            with open(table_def.full_path, 'w', newline='') as csv_file:
+                csv_writer = csv.writer(csv_file)
+                csv_writer.writerows(parsed)
+
             self.write_manifest(table_def)
 
     def _init_client(self) -> None:
@@ -132,8 +143,7 @@ class Component(ComponentBase):
 
     def _init_client_from_config(self) -> None:
         oauth_credentials = self.configuration.oauth_credentials
-        self.write_state_file({"test": str(oauth_credentials)})
-        exit(0)
+        # self.write_state_file({"test": str(oauth_credentials)})
         if isinstance(oauth_credentials.data.get("scope"), str):
             oauth_credentials.data["scope"] = oauth_credentials.data["scope"].split(" ")
         self.client = XeroClient(oauth_credentials)
@@ -174,6 +184,41 @@ class Component(ComponentBase):
             unavailable_tenants_str = ', '.join(unavailable_tenants)
             raise UserException(f"Some tenants to be downloaded (IDs: {unavailable_tenants_str})"
                                 f" are not accessible, please, check if you granted sufficient credentials.")
+
+    def parse_balance_sheet(self, data: dict):
+        report = serialize_to_dict(self.convert_api_response(data))
+        rows = []
+        for section in report.rows:
+            if section.row_type == RowType.SECTION:
+                title = section.title
+
+                for row in section.rows:
+                    if row.row_type == RowType.ROW or row.row_type == RowType.SUMMARYROW:
+                        cells = [cell.value for cell in row.cells]
+                        rows.append([report.report_id, report.updated_date_utc, title, *cells])
+
+        return rows
+
+    @staticmethod
+    def convert_api_response(api_data):
+        report_data = api_data[0]  # Assuming the API response is a list with a single report
+
+        my_report = XeroReport
+
+        my_report.report_id = report_data.report_id if hasattr(report_data, 'report_id') else ''
+        my_report.report_name = report_data.report_name if hasattr(report_data, 'report_name') else ''
+        my_report.report_type = report_data.report_type if hasattr(report_data, 'report_type') else ''
+        my_report.report_title = report_data.report_title if hasattr(report_data, 'report_title') else ''
+        my_report.report_date = parser.parse(report_data.report_date).strftime('%Y-%m-%d') if (
+            hasattr(report_data, 'report_date')) else ''
+        my_report.updated_date_utc = report_data.updated_date_utc if (
+            hasattr(report_data, 'updated_date_utc')) else datetime.utcnow()
+
+        rows_data = report_data.rows if hasattr(report_data, 'rows') else []
+
+        my_report.rows = [row for row in rows_data]
+
+        return my_report
 
 
 """
