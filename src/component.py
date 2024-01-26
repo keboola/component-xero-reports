@@ -47,7 +47,7 @@ class Component(ComponentBase):
 
     def run(self):
         params: Dict = self.configuration.parameters
-        sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
+        # sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
         destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
 
         """
