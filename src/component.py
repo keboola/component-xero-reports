@@ -253,7 +253,8 @@ class Component(ComponentBase):
 
     @staticmethod
     def generate_dates(base_date, timeframe, periods) -> list:
-        base_date = datetime.strptime(base_date, "%Y-%m-%d")
+        if not isinstance(base_date, datetime):
+            base_date = datetime.strptime(base_date, "%Y-%m-%d")
 
         date_list = []
 
