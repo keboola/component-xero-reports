@@ -230,7 +230,7 @@ if __name__ == "__main__":
         comp.execute_action()
     except UserException as exc:
         logging.warning("During the component fail, the authorization is invalidated due to the functioning of the "
-                        "XERO authorization. If The authroization is invalid, you must reauthorize the component")
+                        "XERO authorization. If The authorization is invalid, you must reauthorize the component")
         logging.exception(exc)
         exit(1)
     except Exception as exc:
