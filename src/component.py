@@ -294,9 +294,7 @@ class Component(ComponentBase):
         return batches
 
     @staticmethod
-    def get_last_date(report_params):
-        date = report_params.get(KEY_DATE)
-
+    def get_last_date(date: str):
         if date == "last_month":
             return datetime.today() - relativedelta(days=datetime.today().day)
 
