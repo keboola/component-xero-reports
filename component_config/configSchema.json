@@ -18,7 +18,7 @@
           "type": "string",
           "required": true,
           "title": "Date",
-          "description": "Date must be set in YYYY-MM-DD format.",
+          "description": "Date must be set in YYYY-MM-DD format or to \"last_month\" which will use the last day of previous month.",
           "propertyOrder": 1
         },
         "periods": {
