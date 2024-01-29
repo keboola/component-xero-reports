@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Dict, Iterable, List
 
@@ -64,5 +65,7 @@ class XeroClient:
         return self._available_tenant_ids
 
     def get_balance_sheet_report(self, tenant_id: str, **kwargs) -> Iterable[List[EnhancedBaseModel]]:
+        if kwargs:
+            logging.info(f"Getting balance sheet report with parameters: {kwargs}")
         accounting_api = AccountingApi(self._api_client)
         return accounting_api.get_report_balance_sheet(tenant_id, **kwargs).to_list()
