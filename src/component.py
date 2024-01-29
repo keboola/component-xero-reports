@@ -44,12 +44,14 @@ REQUIRED_PARAMETERS = [KEY_GROUP_REPORT_PARAMS, KEY_GROUP_DESTINATION_OPTIONS]
 
 class Component(ComponentBase):
     def __init__(self, data_path_override: str = None):
+        super().__init__(data_path_override=data_path_override, required_parameters=REQUIRED_PARAMETERS)
+
         self.incremental_load = None
         self.client = None
         self.tables = {}
         self._writer_cache = {}
         self.new_state = {}
-        super().__init__(data_path_override=data_path_override, required_parameters=REQUIRED_PARAMETERS)
+        self.columns = set()
 
         register_csv_dialect()
 
@@ -58,6 +60,8 @@ class Component(ComponentBase):
         report_params = params.get(KEY_GROUP_REPORT_PARAMS, {})
         sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
         destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
+
+        self.columns = self.get_state_file().get("columns", self.columns)
 
         load_type = destination.get(KEY_LOAD_TYPE, "full_load")
         self.incremental_load = load_type == "incremental_load"
@@ -76,6 +80,7 @@ class Component(ComponentBase):
     def refresh_token_and_save_state(self) -> None:
         self._refresh_client_token()
         self.new_state[KEY_STATE_OAUTH_TOKEN_DICT] = json.dumps(self.client.get_xero_oauth2_token_dict())
+        self.new_state["columns"] = list(self.columns)
         self.write_state_file(self.new_state)
 
     def _refresh_client_token(self) -> None:
@@ -106,6 +111,7 @@ class Component(ComponentBase):
                     wr.writeheader()
                     wr.writerows(parsed)
 
+            self.columns.update(wr.fieldnames)
             self.write_manifest(table_def)
 
     def _init_client(self) -> None:
