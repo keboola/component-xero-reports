@@ -1,6 +1,6 @@
 keboola.component==1.4.2
 keboola.utils
-keboola.http-client
+keboola.csvwriter
 mock
 freezegun
 xero-python==1.26.0

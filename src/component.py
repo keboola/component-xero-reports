@@ -9,6 +9,8 @@ from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 from keboola.component.interface import register_csv_dialect
 from keboola.utils.helpers import comma_separated_values_to_list
+from keboola.csvwriter import ElasticDictWriter
+
 from xero_python.accounting import RowType
 from xero_python.models import serialize_to_dict
 
@@ -95,15 +97,14 @@ class Component(ComponentBase):
             parsed = self.parse_balance_sheet(report)
             table_name = f"balance_sheet_{tenant_id}"
 
-            header = ['report_id', 'updated_date_utc', 'section_title', 'cell_1', 'cell_2', 'cell_3']
             table_def = self.create_out_table_definition(table_name,
-                                                         columns=header,
-                                                         primary_key=['updated_date_utc', 'cell_2'],
+                                                         columns=[],
+                                                         primary_key=[],
                                                          incremental=self.incremental_load)
 
-            with open(table_def.full_path, 'w', newline='') as csv_file:
-                csv_writer = csv.writer(csv_file)
-                csv_writer.writerows(parsed)
+            with ElasticDictWriter(table_def.full_path, []) as wr:
+                wr.writeheader()
+                wr.writerows(parsed)
 
             self.write_manifest(table_def)
 
@@ -143,8 +144,6 @@ class Component(ComponentBase):
 
     def _init_client_from_config(self) -> None:
         oauth_credentials = self.configuration.oauth_credentials
-        self.write_state_file({"test": str(oauth_credentials)})
-        exit(0)
         if isinstance(oauth_credentials.data.get("scope"), str):
             oauth_credentials.data["scope"] = oauth_credentials.data["scope"].split(" ")
         self.client = XeroClient(oauth_credentials)
@@ -188,17 +187,37 @@ class Component(ComponentBase):
 
     def parse_balance_sheet(self, data: dict) -> list:
         report = serialize_to_dict(self.convert_api_response(data))
-        rows = []
+        results = []
         for section in report.rows:
             if section.row_type == RowType.SECTION:
                 title = section.title
 
                 for row in section.rows:
+                    result = {}
                     if row.row_type == RowType.ROW or row.row_type == RowType.SUMMARYROW:
-                        cells = [cell.value for cell in row.cells]
-                        rows.append([report.report_id, report.updated_date_utc, title, *cells])
+                        _cells = [cell.value for cell in row.cells]
+                        _attributes = [cell.attributes for cell in row.cells]
 
-        return rows
+                        counter = 1
+                        for attribute_list in _attributes:
+                            if attribute_list:
+                                for attribute in attribute_list:
+                                    result[f"attribute_id_{counter}"] = attribute.id
+                                    result[f"attribute_value_{counter}"] = attribute.value
+                                    counter += 1
+
+                        result.update({
+                            'report_title': report.report_title,
+                            'report_date': report.report_date,
+                            'updated_date_utc': report.updated_date_utc,
+                            'section_title': title,
+                        })
+
+                        result.update({f"cell_{c}": value if len(_cells) > 0 else '' for c, value in enumerate(_cells)})
+
+                        results.append(result)
+
+        return results
 
     @staticmethod
     def convert_api_response(api_data):
@@ -209,7 +228,10 @@ class Component(ComponentBase):
         my_report.report_id = report_data.report_id if hasattr(report_data, 'report_id') else ''
         my_report.report_name = report_data.report_name if hasattr(report_data, 'report_name') else ''
         my_report.report_type = report_data.report_type if hasattr(report_data, 'report_type') else ''
-        my_report.report_title = report_data.report_title if hasattr(report_data, 'report_title') else ''
+        report_titles = report_data.report_titles if hasattr(report_data, 'report_titles') else ''
+        report_title = ' - '.join(report_titles).strip()
+        my_report.report_title = report_title if report_title else ''
+
         my_report.report_date = parser.parse(report_data.report_date).strftime('%Y-%m-%d') if (
             hasattr(report_data, 'report_date')) else ''
         my_report.updated_date_utc = report_data.updated_date_utc if (
