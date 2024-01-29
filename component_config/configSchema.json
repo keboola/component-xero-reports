@@ -55,13 +55,13 @@
           "description": "The period size to compare to (MONTH, QUARTER, YEAR)",
           "propertyOrder": 3
         },
-        "tracking_option_id_1": {
+        "tracking_option_id1": {
           "type": "string",
           "title": "Tracking Option ID1 (Optional)",
           "description": "The balance sheet will be filtered by this option if supplied. Note you cannot filter just by the TrackingCategory.",
           "propertyOrder": 4
         },
-        "tracking_option_id_2": {
+        "tracking_option_id2": {
           "type": "string",
           "title": "Tracking Option ID2 (Optional)",
           "description": "If you want to filter by more than one tracking category option then you can specify a second option too. See the Balance Sheet report in Xero learn more about this behavior when filtering by tracking category options.",
