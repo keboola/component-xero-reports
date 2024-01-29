@@ -1,8 +1,7 @@
 {
   "type": "object",
   "title": "Xero Accounting configuration",
-  "required": [
-  ],
+  "required": [],
   "properties": {
     "tenant_ids": {
       "title": "Tenant IDs",
@@ -10,9 +9,9 @@
       "type": "string",
       "propertyOrder": 10
     },
-    "sync_options": {
+    "report_parameters": {
       "type": "object",
-      "title": "Sync Options",
+      "title": "Report Parameters",
       "propertyOrder": 20,
       "properties": {
         "date": {
@@ -83,6 +82,34 @@
         }
       }
     },
+    "sync_options": {
+      "title": "Sync Options",
+      "type": "object",
+      "properties": {
+        "previous_periods": {
+          "type": "integer",
+          "title": "Previous periods",
+          "description": "The number of previous periods to fetch data for. For example, if set to 3, the data for the current period and the previous 3 periods will be fetched. If set to 0, only the current period will be fetched.",
+          "enum": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "propertyOrder": 1
+        }
+      },
+      "propertyOrder": 30
+    },
     "destination": {
       "title": "Destination",
       "type": "object",
@@ -103,10 +130,10 @@
           "default": "full_load",
           "title": "Load Type",
           "description": "If Full load is used, the destination table will be overwritten every run. If incremental load is used, data will be upserted into the destination table. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.",
-          "propertyOrder": 20
+          "propertyOrder": 10
         }
       },
-      "propertyOrder": 30
+      "propertyOrder": 40
     }
   }
 }

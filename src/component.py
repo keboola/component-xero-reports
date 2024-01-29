@@ -1,7 +1,8 @@
 import json
 import logging
 from typing import Dict, List, Union
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from dateutil import parser
 
 from keboola.component.base import ComponentBase
@@ -20,7 +21,9 @@ from xero_python.accounting.models import report as XeroReport
 
 # configuration variables
 KEY_TENANT_IDS = 'tenant_ids'
+KEY_GROUP_REPORT_PARAMS = 'report_parameters'
 KEY_GROUP_SYNC_OPTIONS = 'sync_options'
+KEY_PREVIOUS_PERIODS = 'previous_periods'
 KEY_DATE = 'date'
 KEY_PERIODS = 'periods'
 KEY_TIMEFRAME = 'timeframe'
@@ -36,7 +39,7 @@ KEY_STATE_ENDPOINT_COLUMNS = "endpoint_columns"
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_GROUP_SYNC_OPTIONS, KEY_GROUP_DESTINATION_OPTIONS]
+REQUIRED_PARAMETERS = [KEY_GROUP_REPORT_PARAMS, KEY_GROUP_DESTINATION_OPTIONS]
 
 
 class Component(ComponentBase):
@@ -52,6 +55,7 @@ class Component(ComponentBase):
 
     def run(self):
         params: Dict = self.configuration.parameters
+        report_params = params.get(KEY_GROUP_REPORT_PARAMS, {})
         sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
         destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
 
@@ -63,7 +67,11 @@ class Component(ComponentBase):
         available_tenant_ids = self._get_available_tenant_ids()
         tenant_ids_to_download = self._get_tenants_to_download(available_tenant_ids)
 
-        self.download_report(tenant_ids=tenant_ids_to_download, **sync_options)
+        batches = self.generate_batches(report_params, sync_options)
+
+        for batch in batches:
+            self.download_report(tenant_ids=tenant_ids_to_download, **batch)
+
         self.refresh_token_and_save_state()
 
     def refresh_token_and_save_state(self) -> None:
@@ -231,6 +239,44 @@ class Component(ComponentBase):
         my_report.rows = [row for row in rows_data]
 
         return my_report
+
+    @staticmethod
+    def generate_dates(base_date, timeframe, periods) -> list:
+        base_date = datetime.strptime(base_date, "%Y-%m-%d")
+
+        date_list = []
+
+        if timeframe == "MONTH":
+            step = relativedelta(months=1)
+        elif timeframe == "QUARTER":
+            step = relativedelta(months=3)
+        elif timeframe == "YEAR":
+            step = relativedelta(years=1)
+        else:
+            raise UserException("Invalid timeframe. Choose from MONTH, QUARTER, or YEAR.")
+
+        date_list.append(base_date.strftime("%Y-%m-%d"))
+
+        for _ in range(periods):
+            base_date -= step
+            # Adjust the day to the last day of the month
+            last_day_of_month = base_date.replace(day=1) + timedelta(days=32)
+            last_day_of_month = last_day_of_month.replace(day=1) - timedelta(days=1)
+            date_list.append(last_day_of_month.strftime("%Y-%m-%d"))
+
+        return date_list
+
+    def generate_batches(self, report_params: dict, sync_options) -> list:
+        batches = []
+        dates = self.generate_dates(report_params[KEY_DATE], report_params[KEY_TIMEFRAME],
+                                    sync_options[KEY_PREVIOUS_PERIODS])
+
+        for date in dates:
+            report_batch = report_params.copy()
+            report_batch[KEY_DATE] = date
+            batches.append(report_batch)
+
+        return batches
 
 
 """
