@@ -61,7 +61,8 @@ class Component(ComponentBase):
         sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
         destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
 
-        self.columns = self.get_state_file().get("columns", self.columns)
+        columns = self.get_state_file().get("columns", self.columns)
+        self.columns = set(columns)
 
         load_type = destination.get(KEY_LOAD_TYPE, "full_load")
         self.incremental_load = load_type == "incremental_load"
