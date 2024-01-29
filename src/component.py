@@ -123,8 +123,6 @@ class Component(ComponentBase):
 
     def _init_client_from_state(self, state_authorization_params: Union[str, Dict]) -> None:
         oauth_credentials = self.configuration.oauth_credentials
-        self.write_state_file({"test": str(oauth_credentials)})
-        exit(0)
         oauth_credentials.data = self._load_state_oauth(state_authorization_params)
         self.client = XeroClient(oauth_credentials)
         try:
@@ -145,6 +143,8 @@ class Component(ComponentBase):
 
     def _init_client_from_config(self) -> None:
         oauth_credentials = self.configuration.oauth_credentials
+        self.write_state_file({"test": str(oauth_credentials)})
+        exit(0)
         if isinstance(oauth_credentials.data.get("scope"), str):
             oauth_credentials.data["scope"] = oauth_credentials.data["scope"].split(" ")
         self.client = XeroClient(oauth_credentials)
@@ -186,7 +186,7 @@ class Component(ComponentBase):
             raise UserException(f"Some tenants to be downloaded (IDs: {unavailable_tenants_str})"
                                 f" are not accessible, please, check if you granted sufficient credentials.")
 
-    def parse_balance_sheet(self, data: dict):
+    def parse_balance_sheet(self, data: dict) -> list:
         report = serialize_to_dict(self.convert_api_response(data))
         rows = []
         for section in report.rows:
