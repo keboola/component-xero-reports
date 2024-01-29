@@ -143,7 +143,7 @@ class Component(ComponentBase):
 
     def _init_client_from_config(self) -> None:
         oauth_credentials = self.configuration.oauth_credentials
-        # self.write_state_file({"test": str(oauth_credentials)})
+        self.write_state_file({"test": str(oauth_credentials)})
         if isinstance(oauth_credentials.data.get("scope"), str):
             oauth_credentials.data["scope"] = oauth_credentials.data["scope"].split(" ")
         self.client = XeroClient(oauth_credentials)
