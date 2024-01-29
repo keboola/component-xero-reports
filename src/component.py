@@ -100,7 +100,7 @@ class Component(ComponentBase):
             with ElasticDictWriter(table_def.full_path, []) as wr:
                 for batch in batches:
                     report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **batch)
-                    parsed = self.parse_balance_sheet(report)
+                    parsed = self.parse_balance_sheet(report, batch["date"])
 
                     wr.writeheader()
                     wr.writerows(parsed)
@@ -184,7 +184,7 @@ class Component(ComponentBase):
             raise UserException(f"Some tenants to be downloaded (IDs: {unavailable_tenants_str})"
                                 f" are not accessible, please, check if you granted sufficient credentials.")
 
-    def parse_balance_sheet(self, data: dict) -> list:
+    def parse_balance_sheet(self, data: dict, date: str) -> list:
         report = serialize_to_dict(self.convert_api_response(data))
         results = []
         for section in report.rows:
@@ -209,7 +209,8 @@ class Component(ComponentBase):
                             'report_title': report.report_title,
                             'report_date': report.report_date,
                             'updated_date_utc': report.updated_date_utc,
-                            'section_title': title,
+                            'date': date,
+                            'section_title': title
                         })
 
                         result.update({f"cell_{c}": value if len(_cells) > 0 else '' for c, value in enumerate(_cells)})
