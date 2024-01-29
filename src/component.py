@@ -279,9 +279,7 @@ class Component(ComponentBase):
 
     def generate_batches(self, report_params: dict, sync_options) -> list:
 
-        date = report_params[KEY_DATE]
-        if date == "last_month":
-            date = datetime.today() - relativedelta(days=datetime.today().day)
+        date = self.get_last_date(report_params[KEY_DATE])
 
         batches = []
         dates = self.generate_dates(date, report_params[KEY_TIMEFRAME],
@@ -293,6 +291,18 @@ class Component(ComponentBase):
             batches.append(report_batch)
 
         return batches
+
+    @staticmethod
+    def get_last_date(report_params):
+        date = report_params.get(KEY_DATE)
+
+        if date == "last_month":
+            return datetime.today() - relativedelta(days=datetime.today().day)
+
+        elif date == "last_year":
+            return datetime.today() - relativedelta(years=1, days=datetime.today().day)
+
+        return date
 
 
 """
