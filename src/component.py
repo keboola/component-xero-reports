@@ -52,18 +52,8 @@ class Component(ComponentBase):
 
     def run(self):
         params: Dict = self.configuration.parameters
-        # sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
+        sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
         destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
-
-        """
-        date = sync_options.get(KEY_DATE)
-        periods = sync_options.get(KEY_PERIODS)
-        timeframe = sync_options.get(KEY_TIMEFRAME)
-        tracking_option_id1 = sync_options.get(KEY_TRACKING_OPTION_ID1)
-        tracking_option_id2 = sync_options.get(KEY_TRACKING_OPTION_ID2)
-        standard_layout = sync_options.get(KEY_STANDARD_LAYOUT)
-        payments_only = sync_options.get(KEY_PAYMENTS_ONLY)
-        """
 
         load_type = destination.get(KEY_LOAD_TYPE, "full_load")
         self.incremental_load = load_type == "incremental_load"
@@ -73,7 +63,7 @@ class Component(ComponentBase):
         available_tenant_ids = self._get_available_tenant_ids()
         tenant_ids_to_download = self._get_tenants_to_download(available_tenant_ids)
 
-        self.download_report(tenant_ids=tenant_ids_to_download)
+        self.download_report(tenant_ids=tenant_ids_to_download, **sync_options)
         self.refresh_token_and_save_state()
 
     def refresh_token_and_save_state(self) -> None:
