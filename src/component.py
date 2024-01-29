@@ -94,7 +94,8 @@ class Component(ComponentBase):
 
             table_def = self.create_out_table_definition(table_name,
                                                          columns=[],
-                                                         primary_key=[],
+                                                         primary_key=["date", "section_title", "report_title",
+                                                                      "cell_0"],
                                                          incremental=self.incremental_load)
 
             with ElasticDictWriter(table_def.full_path, []) as wr:
