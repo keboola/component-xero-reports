@@ -69,8 +69,7 @@ class Component(ComponentBase):
 
         batches = self.generate_batches(report_params, sync_options)
 
-        for batch in batches:
-            self.download_report(tenant_ids=tenant_ids_to_download, **batch)
+        self.download_reports(tenant_ids=tenant_ids_to_download, batches=batches)
 
         self.refresh_token_and_save_state()
 
@@ -87,11 +86,10 @@ class Component(ComponentBase):
                                 "\n Due to the functioning of the XERO authorization, if a component fails,"
                                 " the component must be reauthorized.") from xero_exc
 
-    def download_report(self, tenant_ids: List[str], **kwargs) -> None:
+    def download_reports(self, tenant_ids: List[str], batches: list) -> None:
         logging.info(f"Fetching report data for tenant_ids: {tenant_ids}")
+
         for tenant_id in tenant_ids:
-            report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **kwargs)
-            parsed = self.parse_balance_sheet(report)
             table_name = f"balance_sheet_{tenant_id}"
 
             table_def = self.create_out_table_definition(table_name,
@@ -100,8 +98,12 @@ class Component(ComponentBase):
                                                          incremental=self.incremental_load)
 
             with ElasticDictWriter(table_def.full_path, []) as wr:
-                wr.writeheader()
-                wr.writerows(parsed)
+                for batch in batches:
+                    report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **batch)
+                    parsed = self.parse_balance_sheet(report)
+
+                    wr.writeheader()
+                    wr.writerows(parsed)
 
             self.write_manifest(table_def)
 
