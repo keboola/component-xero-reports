@@ -91,6 +91,9 @@ class Component(ComponentBase):
         except dataconf.exceptions.MalformedConfigException as e:
             raise UserException(f"Invalid configuration. Please check the configuration parameters. {e}") from e
 
+        if not self._configuration.report_parameters.date:
+            raise UserException("Date parameter is required")
+
     def refresh_token_and_save_state(self) -> None:
         self._refresh_client_token()
         self.new_state[KEY_STATE_OAUTH_TOKEN_DICT] = json.dumps(self.client.get_xero_oauth2_token_dict())
