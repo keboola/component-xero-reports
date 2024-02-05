@@ -123,6 +123,8 @@ class Component(ComponentBase):
             with ElasticDictWriter(table_def.full_path, []) as wr:
                 for batch in batches:
                     report = self.client.get_balance_sheet_report(tenant_id=tenant_id, **batch)
+                    logging.debug(f"Processing report data: {report}")
+
                     parsed = self.parse_balance_sheet(report, batch["date"])
 
                     wr.writeheader()
