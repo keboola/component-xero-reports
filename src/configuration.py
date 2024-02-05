@@ -4,7 +4,6 @@ from dataclasses import dataclass, asdict
 from typing import List
 
 import dataconf
-from pyhocon import ConfigTree
 
 
 class ConfigurationBase:
