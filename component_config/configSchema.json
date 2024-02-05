@@ -12,18 +12,21 @@
     "report_parameters": {
       "type": "object",
       "title": "Report Parameters",
+      "required": [
+        "date",
+        "periods",
+        "timeframe"
+      ],
       "propertyOrder": 20,
       "properties": {
         "date": {
           "type": "string",
-          "required": true,
           "title": "Date",
           "description": "Date must be set in YYYY-MM-DD format or to \"last_month/last_year\" which will use the last day of previous month/year.",
           "propertyOrder": 1
         },
         "periods": {
           "type": "integer",
-          "required": true,
           "title": "Periods",
           "description": "The number of periods to compare",
           "enum": [
@@ -43,7 +46,6 @@
         },
         "timeframe": {
           "type": "string",
-          "required": true,
           "title": "Timeframe",
           "enum": [
             "MONTH",

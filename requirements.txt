@@ -6,3 +6,4 @@ freezegun
 xero-python==1.26.0
 dateparser
 regex==2022.03.02
+dataconf==2.2.1

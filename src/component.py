@@ -2,6 +2,8 @@ import json
 import logging
 from typing import Dict, List, Union
 from datetime import datetime, timedelta
+
+import dataconf.exceptions
 from dateutil.relativedelta import relativedelta
 from dateutil import parser
 
@@ -14,6 +16,7 @@ from keboola.csvwriter import ElasticDictWriter
 from xero_python.accounting import RowType
 from xero_python.models import serialize_to_dict
 
+from configuration import Configuration
 from xero.client import XeroClient
 from xero.utility import XeroException
 from xero_python.accounting.models import report as XeroReport
@@ -45,6 +48,7 @@ REQUIRED_PARAMETERS = [KEY_GROUP_REPORT_PARAMS, KEY_GROUP_DESTINATION_OPTIONS]
 class Component(ComponentBase):
     def __init__(self, data_path_override: str = None):
         super().__init__(data_path_override=data_path_override, required_parameters=REQUIRED_PARAMETERS)
+        self._configuration: Configuration
 
         self.incremental_load = None
         self.client = None
@@ -56,15 +60,15 @@ class Component(ComponentBase):
         register_csv_dialect()
 
     def run(self):
-        params: Dict = self.configuration.parameters
-        report_params = params.get(KEY_GROUP_REPORT_PARAMS, {})
-        sync_options = params.get(KEY_GROUP_SYNC_OPTIONS, {})
-        destination = params.get(KEY_GROUP_DESTINATION_OPTIONS, {})
+        self._init_configuration()
+        report_params = Configuration.as_dict(self._configuration.report_parameters)
+        sync_options = self._configuration.sync_options
+        destination = self._configuration.destination
 
         columns = self.get_state_file().get("columns", self.columns)
         self.columns = set(columns)
 
-        load_type = destination.get(KEY_LOAD_TYPE, "full_load")
+        load_type = destination.load_type
         self.incremental_load = load_type == "incremental_load"
 
         self._init_client()
@@ -72,11 +76,20 @@ class Component(ComponentBase):
         available_tenant_ids = self._get_available_tenant_ids()
         tenant_ids_to_download = self._get_tenants_to_download(available_tenant_ids)
 
-        batches = self.generate_batches(report_params, sync_options)
+        batches = self.generate_batches(report_params, Configuration.as_dict(sync_options))
 
         self.download_reports(tenant_ids=tenant_ids_to_download, batches=batches)
 
         self.refresh_token_and_save_state()
+
+    def _init_configuration(self):
+        self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
+        params = self.configuration.parameters
+
+        try:
+            self._configuration: Configuration = Configuration.load_from_dict(params)
+        except dataconf.exceptions.MalformedConfigException as e:
+            raise UserException(f"Invalid configuration. Please check the configuration parameters. {e}") from e
 
     def refresh_token_and_save_state(self) -> None:
         self._refresh_client_token()
@@ -175,7 +188,7 @@ class Component(ComponentBase):
             raise UserException from xero_exc
 
     def _get_tenants_to_download(self, available_tenant_ids: List[str]) -> List[str]:
-        tenant_ids_to_download = comma_separated_values_to_list(self.configuration.parameters.get(KEY_TENANT_IDS))
+        tenant_ids_to_download = comma_separated_values_to_list(self._configuration.tenant_ids)
 
         if not tenant_ids_to_download:
             tenant_ids_to_download = available_tenant_ids
@@ -278,7 +291,7 @@ class Component(ComponentBase):
 
         return date_list
 
-    def generate_batches(self, report_params: dict, sync_options) -> list:
+    def generate_batches(self, report_params: dict, sync_options: dict) -> list:
 
         date = self.get_last_date(report_params[KEY_DATE])
 
