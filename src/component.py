@@ -94,6 +94,12 @@ class Component(ComponentBase):
         if not self._configuration.report_parameters.date:
             raise UserException("Date parameter is required")
 
+        if self._configuration.report_parameters.periods:
+            try:
+                self._configuration.report_parameters.periods = int(self._configuration.report_parameters.periods)
+            except ValueError as e:
+                raise UserException(f"Periods parameter must be a number. {e}") from e
+
     def refresh_token_and_save_state(self) -> None:
         self._refresh_client_token()
         self.new_state[KEY_STATE_OAUTH_TOKEN_DICT] = json.dumps(self.client.get_xero_oauth2_token_dict())
@@ -116,8 +122,7 @@ class Component(ComponentBase):
 
             table_def = self.create_out_table_definition(table_name,
                                                          columns=[],
-                                                         primary_key=["date", "section_title", "report_title",
-                                                                      "cell_0"],
+                                                         primary_key=["date", "title", "account_id"],
                                                          incremental=self.incremental_load)
 
             with ElasticDictWriter(table_def.full_path, []) as wr:
@@ -145,6 +150,7 @@ class Component(ComponentBase):
         else:
             logging.info("Authorizing Client from oauth")
             self._init_client_from_config()
+
         logging.info("Client Authorized")
 
     def _init_client_from_state(self, state_authorization_params: Union[str, Dict]) -> None:
@@ -213,36 +219,44 @@ class Component(ComponentBase):
     def parse_balance_sheet(self, data: dict, date: str) -> list:
         report = serialize_to_dict(self.convert_api_response(data))
         results = []
-        for section in report.rows:
-            if section.row_type == RowType.SECTION:
-                title = section.title
 
-                for row in section.rows:
-                    result = {}
-                    if row.row_type == RowType.ROW or row.row_type == RowType.SUMMARYROW:
-                        _cells = [cell.value for cell in row.cells]
-                        _attributes = [cell.attributes for cell in row.cells]
+        is_first_row = True
+        for row in report.rows:
+            is_first_subrow = True
+            title, value, account_id, account_name = "", "", "", ""
 
-                        counter = 1
-                        for attribute_list in _attributes:
-                            if attribute_list:
-                                for attribute in attribute_list:
-                                    result[f"attribute_id_{counter}"] = attribute.id
-                                    result[f"attribute_value_{counter}"] = attribute.value
-                                    counter += 1
+            if is_first_row:
+                request_date = row.cells[1].value
+                is_first_row = False
+                continue
 
-                        result.update({
-                            'report_title': report.report_title,
-                            'report_date': report.report_date,
-                            'updated_date_utc': report.updated_date_utc,
-                            'date': date,
-                            'section_title': title
-                        })
+            if row.row_type == RowType.SECTION:
+                title = row.title
 
-                        result.update({f"cell_{c}": value if len(_cells) > 0 else '' for c, value in enumerate(_cells)})
+                for _row in row.rows:
 
-                        results.append(result)
+                    if _row.row_type == RowType.ROW:
+                        if _row.cells:
 
+                            if is_first_subrow:
+                                is_first_subrow = False
+                                account_name = _row.cells[0].value
+
+                            cell = _row.cells[1]
+                            value = cell.value
+
+                            if cell.attributes:
+                                account_id = cell.attributes[0].value
+
+                            results.append({
+                                "report_title": report.report_title,
+                                "title": title,
+                                "account_name": account_name,
+                                "account_id": account_id,
+                                "date": date,
+                                "request_date": request_date,
+                                "value": value
+                            })
         return results
 
     @staticmethod

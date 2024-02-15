@@ -53,7 +53,7 @@ class ConfigurationBase:
 @dataclass
 class ReportParameters(ConfigurationBase):
     date: str
-    periods: int
+    periods: str
     timeframe: str
     tracking_option_id1: str
     tracking_option_id2: str
@@ -76,4 +76,4 @@ class Configuration(ConfigurationBase):
     report_parameters: ReportParameters
     sync_options: SyncOptions
     destination: Destination
-    tenant_ids: str = ""
+    tenant_ids: str
