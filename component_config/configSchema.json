@@ -26,7 +26,7 @@
           "propertyOrder": 1
         },
         "periods": {
-          "type": "text",
+          "type": "string",
           "title": "Periods (Optional)",
           "description": "The number of periods to compare",
           "propertyOrder": 2
