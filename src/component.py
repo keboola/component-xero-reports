@@ -222,7 +222,6 @@ class Component(ComponentBase):
 
         is_first_row = True
         for row in report.rows:
-            is_first_subrow = True
             title, value, account_id, account_name = "", "", "", ""
 
             if is_first_row:
@@ -238,9 +237,7 @@ class Component(ComponentBase):
                     if _row.row_type == RowType.ROW:
                         if _row.cells:
 
-                            if is_first_subrow:
-                                is_first_subrow = False
-                                account_name = _row.cells[0].value
+                            account_name = _row.cells[0].value
 
                             cell = _row.cells[1]
                             value = cell.value
