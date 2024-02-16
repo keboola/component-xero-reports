@@ -93,12 +93,6 @@ class Component(ComponentBase):
         if not self._configuration.report_parameters.date:
             raise UserException("Date parameter is required")
 
-        if self._configuration.report_parameters.periods:
-            try:
-                self._configuration.report_parameters.periods = int(self._configuration.report_parameters.periods)
-            except ValueError as e:
-                raise UserException(f"Periods parameter must be a number. {e}") from e
-
     def refresh_token_and_save_state(self) -> None:
         self._refresh_client_token()
         self.new_state[KEY_STATE_OAUTH_TOKEN_DICT] = json.dumps(self.client.get_xero_oauth2_token_dict())
