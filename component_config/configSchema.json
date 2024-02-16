@@ -72,21 +72,6 @@
           "type": "integer",
           "title": "Previous periods",
           "description": "The number of previous periods to fetch data for. For example, if set to 3, the data for the current period and the previous 3 periods will be fetched. If set to 0, only the current period will be fetched.",
-          "enum": [
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12
-          ],
           "propertyOrder": 1
         }
       },

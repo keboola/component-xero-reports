@@ -83,10 +83,9 @@ class Component(ComponentBase):
 
     def _init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
-        params = self.configuration.parameters
 
         try:
-            self._configuration: Configuration = Configuration.load_from_dict(params)
+            self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
         except dataconf.exceptions.MalformedConfigException as e:
             raise UserException(f"Invalid configuration. Please check the configuration parameters. {e}") from e
 
