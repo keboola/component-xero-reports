@@ -25,17 +25,12 @@
           "description": "Date must be set in YYYY-MM-DD format or to \"last_month/last_year\" which will use the last day of previous month/year.",
           "propertyOrder": 1
         },
-        "periods": {
-          "type": "string",
-          "title": "Periods (Optional)",
-          "description": "The number of periods to compare",
-          "propertyOrder": 2
-        },
         "timeframe": {
           "type": "string",
           "title": "Timeframe",
           "enum": [
             "MONTH",
+            "QUARTER",
             "YEAR"
           ],
           "default": "MONTH",

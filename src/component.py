@@ -28,7 +28,6 @@ KEY_GROUP_REPORT_PARAMS = 'report_parameters'
 KEY_GROUP_SYNC_OPTIONS = 'sync_options'
 KEY_PREVIOUS_PERIODS = 'previous_periods'
 KEY_DATE = 'date'
-KEY_PERIODS = 'periods'
 KEY_TIMEFRAME = 'timeframe'
 KEY_TRACKING_OPTION_ID1 = 'tracking_option_id1'
 KEY_TRACKING_OPTION_ID2 = 'tracking_option_id2'
@@ -122,7 +121,7 @@ class Component(ComponentBase):
 
             table_def = self.create_out_table_definition(table_name,
                                                          columns=[],
-                                                         primary_key=["date", "title", "account_id"],
+                                                         primary_key=["date", "account_id"],
                                                          incremental=self.incremental_load)
 
             with ElasticDictWriter(table_def.full_path, []) as wr:

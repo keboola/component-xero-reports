@@ -53,7 +53,6 @@ class ConfigurationBase:
 @dataclass
 class ReportParameters(ConfigurationBase):
     date: str
-    periods: str
     timeframe: str
     tracking_option_id1: str
     tracking_option_id2: str
