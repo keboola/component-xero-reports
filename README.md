@@ -1,51 +1,49 @@
-Xero Report Extractor
+# Xero Report Extractor
 =============
 
-Description
+## Description
+
+This is a tool designed to extract data from Xero Accounting. It allows users to configure various parameters to tailor the extraction process according to their needs.
 
 **Table of contents:**
 
 [TOC]
 
-Functionality notes
-===================
+## Functionality notes
 
-Prerequisites
-=============
+This tool provides a dynamic UI form for configuration, enabling users to specify parameters such as date range, load type, and sync options. It supports both full load and incremental load modes, allowing users to choose between overwriting the destination table or upserting data into it. Additionally, it offers support for OAuth authentication and backfill mode, ensuring a seamless setup experience.
 
-Get the API token, register application, etc.
+## Prerequisites
 
-Features
-========
+Xero User Account with access to source Xero instance.
 
-| **Feature**             | **Note**                                      |
-|-------------------------|-----------------------------------------------|
-| Generic UI form         | Dynamic UI form                               |
-| Row Based configuration | Allows structuring the configuration in rows. |
-| oAuth                   | oAuth authentication enabled                  |
-| Incremental loading     | Allows fetching data in new increments.       |
-| Backfill mode           | Support for seamless backfill setup.          |
-| Date range filter       | Specify date range.                           |
+## Supported endpoints
 
-Supported endpoints
-===================
+This Extractor is designed only to support Xero Reports API. Currently, only balance sheet report is supported.
+If you require additional endpoints, please submit your request to [ideas.keboola.com](https://ideas.keboola.com/).
 
-If you need more endpoints, please submit your request to
-[ideas.keboola.com](https://ideas.keboola.com/)
+## Configuration
 
-Configuration
-=============
+### Tenant IDs
 
-Param 1
--------
+- **Description**: Comma-separated list of Tenant IDs of tenants to download the data from. Leave empty to download all available. Data will be merged from all provided tenants.
 
-Param 2
--------
+### Report Parameters
 
-Output
-======
+- **Date**: Date must be set in YYYY-MM-DD format or to "last_month/last_year" which will use the last day of the previous month/year.
+- **Timeframe**: The period size to compare to (MONTH, QUARTER, YEAR)
+- **Tracking Option ID1 (Optional)**: The balance sheet will be filtered by this option if supplied. Note you cannot filter just by the TrackingCategory.
+- **Tracking Option ID2 (Optional)**: If you want to filter by more than one tracking category option then you can specify a second option too. See the Balance Sheet report in Xero learn more about this behavior when filtering by tracking category options.
+- **Standard Layout**: If you set this parameter to "true" then no custom report layouts will be applied to the response.
+- **Payments Only**: Set this to true to get cash transactions only.
 
-List of tables, foreign keys, schema.
+### Sync Options
+
+- **Previous periods**: The number of previous periods to fetch data for. For example, if set to 3, the data for the current period and the previous 3 periods will be fetched. If set to 0, only the current period will be fetched.
+
+### Destination
+
+- **Load Type**: If Full load is used, the destination table will be overwritten every run. If incremental load is used, data will be upserted into the destination table. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.
 
 Development
 -----------
