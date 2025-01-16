@@ -1,54 +1,54 @@
-# Xero Report Extractor
+# Xero Reports Extractor
 =============
 
 ## Description
 
-This is a tool designed to extract data from Xero Accounting. It allows users to configure various parameters to tailor the extraction process according to their needs.
+This tool is designed to extract data from Xero Accounting. It allows users to configure various parameters to tailor the extraction process according to their needs.
 
 **Table of contents:**
 
 [TOC]
 
-## Functionality notes
+## Functionality Notes
 
-This tool provides a dynamic UI form for configuration, enabling users to specify parameters such as date range, load type, and sync options. It supports both full load and incremental load modes, allowing users to choose between overwriting the destination table or upserting data into it. Additionally, it offers support for OAuth authentication and backfill mode, ensuring a seamless setup experience.
+This tool provides a dynamic UI form for configuration, enabling users to specify parameters such as the date range, load type, and sync options. It supports both full load and incremental load modes, allowing users to choose between overwriting the destination table or upserting data into it. Additionally, it offers support for OAuth authentication and backfill mode, ensuring a seamless setup experience.
 
 ## Prerequisites
 
-Xero User Account with access to source Xero instance.
+A Xero user account with access to the source Xero instance is required.
 
-## Supported endpoints
+## Supported Endpoints
 
-This Extractor is designed only to support Xero Reports API. Currently, only balance sheet report is supported.
+This extractor is designed to support only the Xero Reports API. Currently, only the balance sheet report is supported.
 If you require additional endpoints, please submit your request to [ideas.keboola.com](https://ideas.keboola.com/).
 
 ## Configuration
 
 ### Tenant IDs
 
-- **Description**: Comma-separated list of Tenant IDs of tenants to download the data from. Leave empty to download all available. Data will be merged from all provided tenants.
+- **Description**: A comma-separated list of Tenant IDs to download data from. Leave empty to download from all available tenants. Data will be merged from all provided tenants.
 
 ### Report Parameters
 
-- **Date**: Date must be set in YYYY-MM-DD format or to "last_month/last_year" which will use the last day of the previous month/year.
-- **Timeframe**: The period size to compare to (MONTH, QUARTER, YEAR)
-- **Tracking Option ID1 (Optional)**: The balance sheet will be filtered by this option if supplied. Note you cannot filter just by the TrackingCategory.
-- **Tracking Option ID2 (Optional)**: If you want to filter by more than one tracking category option then you can specify a second option too. See the Balance Sheet report in Xero learn more about this behavior when filtering by tracking category options.
-- **Standard Layout**: If you set this parameter to "true" then no custom report layouts will be applied to the response.
-- **Payments Only**: Set this to true to get cash transactions only.
+- **Date**: The date must be set in the YYYY-MM-DD format or as "last_month/last_year," which will use the last day of the previous month/year.
+- **Timeframe**: The period size to compare (MONTH, QUARTER, YEAR).
+- **Tracking Option ID1 (Optional)**: The balance sheet will be filtered by this option if supplied. Note that you cannot filter by the tracking category alone.
+- **Tracking Option ID2 (Optional)**: If you want to filter by more than one tracking category option, you can specify a second option here. See the Xero Balance Sheet report to learn more about filtering behavior when using tracking category options.
+- **Standard Layout**: If this parameter is set to "true," no custom report layouts will be applied to the response.
+- **Payments Only**: Set this to "true" to retrieve only cash transactions.
 
 ### Sync Options
 
-- **Previous periods**: The number of previous periods to fetch data for. For example, if set to 3, the data for the current period and the previous 3 periods will be fetched. If set to 0, only the current period will be fetched.
+- **Previous Periods**: The number of previous periods to fetch data for. For example, if set to 3, data for the current period and the previous 3 periods will be fetched. If set to 0, only the current period will be fetched.
 
 ### Destination
 
-- **Load Type**: If Full load is used, the destination table will be overwritten every run. If incremental load is used, data will be upserted into the destination table. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.
+- **Load Type**: If "Full Load" is used, the destination table will be overwritten with every run. If "Incremental Load" is used, data will be upserted into the destination table. Tables with a primary key will have rows updated, while tables without a primary key will have rows appended.
 
 Development
 -----------
 
-If required, change local data folder (the `CUSTOM_FOLDER` placeholder) path to
+If required, change the local data folder (the `CUSTOM_FOLDER` placeholder) path to
 your custom path in the `docker-compose.yml` file:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,8 +57,8 @@ your custom path in the `docker-compose.yml` file:
       - ./CUSTOM_FOLDER:/data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Clone this repository, init the workspace and run the component with following
-command:
+Clone this repository, initialize the workspace, and run the component with the following
+commands:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 git clone https://bitbucket.org/kds_consulting_team/kds-team.ex-xero-reports/src/main/ kds-team.ex-xero-reports
@@ -67,7 +67,7 @@ docker-compose build
 docker-compose run --rm dev
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Run the test suite and lint check using this command:
+Run the test suite and lint checks using this command:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 docker-compose run --rm test
@@ -76,6 +76,6 @@ docker-compose run --rm test
 Integration
 ===========
 
-For information about deployment and integration with KBC, please refer to the
-[deployment section of developers
-documentation](https://developers.keboola.com/extend/component/deployment/)
+For information about deployment and integration with Keboola, please refer to the
+[deployment section of the developers
+documentation](https://developers.keboola.com/extend/component/deployment/).
